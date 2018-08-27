@@ -1,6 +1,6 @@
 {
-  "name": "davichoso/react-native-share-img",
-  "version": "1",
+  "name": "react-native-share-img-to-fb-tw-in",
+  "version": "1.0.1",
   "description": "Share image on Instagram, Facebook, Twitter",
   "main": "index.js",
   "scripts": {

@@ -1,4 +1,4 @@
-package com.reactlibrary;
+package com.davichoso.RNShare;
 
 import java.util.Arrays;
 import java.util.Collections;

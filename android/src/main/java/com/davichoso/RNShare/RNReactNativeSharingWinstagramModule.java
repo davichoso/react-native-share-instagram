@@ -1,4 +1,4 @@
-package com.reactlibrary;
+package com.davichoso.RNShare;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.BaseActivityEventListener;
@@ -42,63 +42,13 @@ import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.content.pm.PackageManager;
+import android.support.v4.content.FileProvider;
+
+
 
 public class RNReactNativeSharingWinstagramModule extends ReactContextBaseJavaModule implements ActivityEventListener {
     private final ReactApplicationContext reactContext;
     private Callback callback;
-
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    /* Checks if external storage is available to at least read */
-    public boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-            Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    private File saveImage(final Context context, String fileName, final String imageData) {
-        final byte[] imgBytesData = Base64.decode(imageData, Base64.DEFAULT);
-        final File file;
-
-        if(isExternalStorageWritable() == false || isExternalStorageReadable() == false) {
-          return null;
-        }
-
-        file = new File(context.getExternalFilesDir(null), fileName);
-
-        try {
-          FileOutputStream fop = new FileOutputStream(file);
-
-    			// if file doesn't exists, then create it
-          try {
-            if (!file.exists()) {
-              file.createNewFile();
-            }
-
-            fop.write(imgBytesData);
-            fop.flush();
-            fop.close();
-          } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-          }
-
-    		} catch (FileNotFoundException e) {
-    			e.printStackTrace();
-          return null;
-    		}
-        return file;
-    }
 
     final int INSTAGRAM_SHARE_REQUEST = 500;
 
@@ -124,36 +74,67 @@ public class RNReactNativeSharingWinstagramModule extends ReactContextBaseJavaMo
     }
 
     @ReactMethod
-    public void shareWithInstagram(String fileName, String base64str, Callback callback, Callback secondCallback) {
+    public void shareWithInstagram(String text, String filePath, Callback callback, Callback secondCallback) {
        Activity currentActivity = getCurrentActivity();
        this.callback = callback;
 
-       String type = "image/jpeg";
-
-       File media = saveImage(getReactApplicationContext(), fileName, base64str);
-
+       String type = "image/*";
          if(isAppInstalled("com.instagram.android") == false) {
            callback.invoke("Sorry, instagram is not installed in your device.");
          } else {
-           if(media.exists()) {
-             // Create the new Intent using the 'Send' action.
+
              Intent share = new Intent(Intent.ACTION_SEND);
-
-             // Set the MIME type
              share.setType(type);
+             File file = new File(filePath);
+             Uri sharedFileUri = FileProvider.getUriForFile(this.reactContext,"com.mktdemocracy.app.provider",file);
              share.setPackage("com.instagram.android");
-
-             Uri uri = Uri.fromFile(media);
-
-             // Add the URI to the Intent.
-             share.putExtra(Intent.EXTRA_STREAM, uri);
-
-             // Broadcast the Intent.
+             share.putExtra(Intent.EXTRA_STREAM, sharedFileUri);
+             share.putExtra(Intent.EXTRA_TEXT, text);
              currentActivity.startActivityForResult(Intent.createChooser(share, "Share to"), INSTAGRAM_SHARE_REQUEST);
-          } else {
-             callback.invoke("Sorry, image could not be loaded from disk.");
-          }
        }
+    }
+
+
+
+    @ReactMethod
+    public void shareWithTW(String text, String filePath, Callback callback, Callback secondCallback) {
+        Activity currentActivity = getCurrentActivity();
+        this.callback = callback;
+
+        String type = "image/*";
+        if(isAppInstalled("com.twitter.android") == false) {
+            callback.invoke("Sorry, Twitter is not installed in your device.");
+        } else {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType(type);
+            File file = new File(filePath);
+            Uri sharedFileUri = FileProvider.getUriForFile(this.reactContext,"com.mktdemocracy.app.provider",file);
+            share.setPackage("com.twitter.android");
+            share.putExtra(Intent.EXTRA_STREAM, sharedFileUri);
+            share.putExtra(Intent.EXTRA_TEXT, text);
+            currentActivity.startActivityForResult(Intent.createChooser(share, "Share to"), INSTAGRAM_SHARE_REQUEST);
+        }
+    }
+
+
+    @ReactMethod
+    public void shareWithFB(String text, String filePath, Callback callback, Callback secondCallback) {
+        Activity currentActivity = getCurrentActivity();
+        this.callback = callback;
+
+        String type = "image/*";
+        if(isAppInstalled("com.facebook.katana") == false) {
+            callback.invoke("Sorry, Facebook is not installed in your device.");
+        } else {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType(type);
+            File file = new File(filePath);
+            Uri sharedFileUri = FileProvider.getUriForFile(this.reactContext,"com.mktdemocracy.app.provider",file);
+            share.setPackage("com.facebook.katana");
+            share.putExtra(Intent.EXTRA_STREAM, sharedFileUri);
+            share.putExtra(Intent.EXTRA_TEXT, text);
+            currentActivity.startActivityForResult(Intent.createChooser(share, "Share to"), INSTAGRAM_SHARE_REQUEST);
+        }
     }
 
     @Override
